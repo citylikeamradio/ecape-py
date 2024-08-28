@@ -12,6 +12,14 @@ from metpy.units import check_units, units
 
 PintList = np.typing.NDArray[pint.Quantity]
 
+def _find_nearest_value(arr: PintList, value: float) -> int:
+    """
+    Helper function to return the index corresponding to the closest
+    entry to `value` in `arr`. Used to find the height levels of the
+    LFC and EL.
+    """
+    return (np.abs(arr - value)).argmin()
+
 
 @check_units("[pressure]", "[temperature]", "[temperature]")
 def _get_parcel_profile(
@@ -78,7 +86,7 @@ def calc_lfc_height(
 
     # calculate the lfc, select the appropriate index & associated height
     lfc_p, lfc_t = mpcalc.lfc(pressure, temperature, dew_point_temperature, parcel_temperature_profile=parcel_profile)
-    lfc_idx = (pressure - lfc_p > 0).nonzero()[0][-1]
+    lfc_idx = _find_nearest_value(pressure, lfc_p)
     lfc_z = height_msl[lfc_idx]
 
     return lfc_idx, lfc_z
@@ -116,7 +124,7 @@ def calc_el_height(
 
     # calculate the el, select the appropriate index & associated height
     el_p, el_t = mpcalc.el(pressure, temperature, dew_point_temperature, parcel_temperature_profile=parcel_profile)
-    el_idx = (pressure - el_p > 0).nonzero()[0][-1]
+    el_idx = _find_nearest_value(pressure, el_p)
     el_z = height_msl[el_idx]
 
     return el_idx, el_z
